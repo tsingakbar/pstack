@@ -7,6 +7,7 @@
 #include "libpstack/reader.h"
 #include "libpstack/fs.h"
 #include "libpstack/global.h"
+#include "libpstack/lz4reader.h"
 
 namespace pstack {
 using std::string;
@@ -223,6 +224,15 @@ CacheReader::readString(Off off) const
 Reader::csptr
 loadFile(const string &path)
 {
+#if defined(WITH_LZ4)
+    const std::string kDotLZ4 = ".lz4";
+    if (path.length() >= kDotLZ4.length() && path.find(kDotLZ4, path.length() - kDotLZ4.length()) != std::string::npos)
+    {
+        return std::make_shared<CacheReader>(
+            std::make_shared<Lz4Reader>(
+                std::make_shared<FileReader>(path)));
+    }
+#endif
     return std::make_shared<CacheReader>(
         std::make_shared<FileReader>(path));
 }
@@ -230,6 +240,15 @@ loadFile(const string &path)
 Reader::csptr
 loadFile(const string &path, Reader::Off minsize)
 {
+#if defined(WITH_LZ4)
+    const std::string kDotLZ4 = ".lz4";
+    if (path.length() >= kDotLZ4.length() && path.find(kDotLZ4, path.length() - kDotLZ4.length()) != std::string::npos)
+    {
+        return std::make_shared<CacheReader>(
+            std::make_shared<Lz4Reader>(
+                std::make_shared<FileReader>(path, minsize)));
+    }
+#endif
     return std::make_shared<CacheReader>(
         std::make_shared<FileReader>(path, minsize));
 }

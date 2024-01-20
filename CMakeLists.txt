@@ -18,6 +18,17 @@ find_library(LTHREADDB NAMES thread_db PATHS (/usr/lib /usr/local/lib))
 find_package(LibLZMA)
 find_package(ZLIB)
 
+find_library(LZ4_LIB NAMES "liblz4.a")
+find_path(LZ4_HDR NAMES "lz4.h")
+if (LZ4_LIB AND LZ4_HDR)
+   add_library(lz4::lz4 STATIC IMPORTED)
+   set_target_properties(
+      lz4::lz4 PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
+                          IMPORTED_LOCATION ${LZ4_LIB})
+   set_target_properties(
+      lz4::lz4 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${LZ4_HDR})
+endif()
+
 if (PYTHON2)
    find_package(Python2 COMPONENTS Development)
 endif()
@@ -130,6 +141,11 @@ add_library(dwelf ${LIBTYPE}
 
 add_library(procman ${LIBTYPE} dead.cc self.cc live.cc process.cc proc_service.cc
     logproc.cc dwarfproc.cc procdump.cc ${stubsrc} ${pysrc})
+if (TARGET lz4::lz4)
+   target_sources(procman PRIVATE lz4reader.cc)
+   add_definitions("-DWITH_LZ4")
+   target_link_libraries(procman lz4::lz4)
+endif()
 
 add_executable(canal canal.cc)
 
