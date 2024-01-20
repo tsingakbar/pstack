@@ -3,6 +3,9 @@
 #include "libpstack/context.h"
 #include "libpstack/dwarf.h"
 #include "libpstack/reader.h"
+#if defined(WITH_LZ4)
+#include "libpstack/lz4reader.h"
+#endif
 
 #include <string.h>
 #include <unistd.h>
@@ -344,6 +347,17 @@ std::shared_ptr<Elf::Object> Context::findImage(const Elf::BuildID &bid) { retur
 
 std::shared_ptr<const Reader>
 Context::loadFile(const std::filesystem::path &path) {
+#if defined(WITH_LZ4)
+    static const std::string kDotLZ4 = ".lz4";
+    std::string pathStr = path;
+    if (pathStr.length() >= kDotLZ4.length() &&
+        pathStr.compare(pathStr.length() - kDotLZ4.length(), kDotLZ4.length(), kDotLZ4) == 0)
+    {
+        return std::make_shared<CacheReader>(
+            std::make_shared<Lz4Reader>(
+                std::make_shared<FileReader>(*this, path)));
+    }
+#endif
     return std::make_shared<CacheReader>( std::make_shared<FileReader>(*this, path));
 }
 

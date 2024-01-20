@@ -23,6 +23,17 @@ option(TIDY "Run clang-tidy on the source" False)
 find_package(LibLZMA REQUIRED)
 find_package(ZLIB REQUIRED)
 
+find_library(LZ4_LIB NAMES "liblz4.a")
+find_path(LZ4_HDR NAMES "lz4.h")
+if (LZ4_LIB AND LZ4_HDR)
+   add_library(lz4::lz4 STATIC IMPORTED)
+   set_target_properties(
+      lz4::lz4 PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
+                          IMPORTED_LOCATION ${LZ4_LIB})
+   set_target_properties(
+      lz4::lz4 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${LZ4_HDR})
+endif()
+
 if (PYTHON2)
    find_package(Python2 COMPONENTS Development)
 endif()
@@ -103,6 +114,11 @@ add_library(dwelf_objects OBJECT
          lzma.cc
          )
 
+if (TARGET lz4::lz4)
+   target_sources(dwelf_objects PRIVATE lz4reader.cc)
+   add_definitions("-DWITH_LZ4")
+endif()
+
 add_library(procman_objects OBJECT dead.cc self.cc live.cc process.cc proc_service.cc
     dwarfproc.cc procdump.cc threaddb.cc ${pysrc})
 
@@ -127,6 +143,10 @@ add_executable(${PSTACK_BIN} pstack.cc)
 
 target_link_libraries(procman dwelf dl)
 target_link_libraries(procman_static dwelf_static dl)
+if (TARGET lz4::lz4)
+   target_link_libraries(dwelf lz4::lz4)
+   target_link_libraries(dwelf_static lz4::lz4)
+endif()
 target_link_libraries(${PSTACK_BIN} ${PSTACK_LINK_LIBS})
 target_link_libraries(canal ${PSTACK_LINK_LIBS})
 target_link_options(${PSTACK_BIN} PRIVATE -Wl,--export-dynamic)

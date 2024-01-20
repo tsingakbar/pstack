@@ -7,6 +7,9 @@
 #include "libpstack/reader.h"
 #include <cstring>
 #include <utility>
+#if defined(WITH_LZ4)
+#include "libpstack/lz4reader.h"
+#endif
 
 namespace pstack {
 using std::string;
