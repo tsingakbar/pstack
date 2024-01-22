@@ -215,3 +215,18 @@ add_test(NAME procself COMMAND tests/procself)
 
 # for automake and rpmbuild
 add_custom_target(check COMMAND make test)
+
+set(CPACK_GENERATOR "${CPACK_GENERATOR}")
+SET(CPACK_PACKAGE_VERSION_MAJOR 2)
+SET(CPACK_PACKAGE_VERSION_MINOR 4)
+SET(CPACK_PACKAGE_VERSION_PATCH 6)
+SET(CPACK_PACKAGE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
+set(CPACK_SET_DESTDIR true)
+set(CPACK_PACKAGE_CONTACT "richieyu@tencent.com")
+if (CPACK_GENERATOR STREQUAL "DEB")
+  set(CPACK_MONOLITHIC_INSTALL 1)
+  include(InstallRequiredSystemLibraries)
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "https://github.com/peadar/pstack, extended with lz4 compressed coredump reading ability")
+endif()
+include(CPack)
